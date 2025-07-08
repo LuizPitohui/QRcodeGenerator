@@ -1,3 +1,5 @@
+# qrcode_generator/urls.py
+
 from django.urls import path
 from . import views
 
@@ -8,5 +10,7 @@ urlpatterns = [
     path('generate/', views.GenerateQRCodeView.as_view(), name='generate'),
     path('history/', views.HistoryView.as_view(), name='history'),
     path('download/', views.DownloadQRCodeView.as_view(), name='download'),
+    
+    # ✅ CORREÇÃO: ADICIONADO O PREFIXO "views."
+    path('upload-pdf/', views.UploadPDFView.as_view(), name='upload_pdf'),
 ]
-

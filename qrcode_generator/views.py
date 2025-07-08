@@ -9,6 +9,7 @@ from django.core.paginator import Paginator
 from django.utils.decorators import method_decorator
 from django.views import View
 from .models import QRCodeHistory
+from .forms import PdfUploadForm # ✅ IMPORTE O FORMULÁRIO
 import json
 
 
@@ -30,6 +31,9 @@ class HomeView(View):
         return render(request, 'qrcode_generator/index.html')
 
 
+# qrcode_generator/views.py
+# ... (imports e outras views) ...
+
 class GenerateQRCodeView(View):
     """View para gerar QR Codes via AJAX"""
     
@@ -46,34 +50,22 @@ class GenerateQRCodeView(View):
             size = int(data.get('size', 10))
             border = int(data.get('border', 4))
             
-            if not content:
-                return JsonResponse({
-                    'success': False, 
-                    'error': 'Conteúdo não pode estar vazio'
-                })
             
-            # Processa o conteúdo baseado no tipo
+            if not content:
+                return JsonResponse({'success': False, 'error': 'Conteúdo não pode estar vazio'})
+            
             processed_content = self.process_content(content, qr_type)
             
-            # Gera o QR Code
-            qr = qrcode.QRCode(
-                version=1,
-                error_correction=qrcode.constants.ERROR_CORRECT_L,
-                box_size=size,
-                border=border,
-            )
+            # ... (a lógica de geração do QR Code continua a mesma) ...
+            qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=size, border=border)
             qr.add_data(processed_content)
             qr.make(fit=True)
-            
-            # Cria a imagem
             img = qr.make_image(fill_color="black", back_color="white")
-            
-            # Converte para base64
             buffer = io.BytesIO()
             img.save(buffer, format='PNG')
             img_str = base64.b64encode(buffer.getvalue()).decode()
             
-            # Salva no histórico
+            # ✅ BLOCO DE CRIAÇÃO MODIFICADO
             QRCodeHistory.objects.create(
                 content=processed_content,
                 qr_type=qr_type,
@@ -81,18 +73,12 @@ class GenerateQRCodeView(View):
                 user_agent=request.META.get('HTTP_USER_AGENT', '')
             )
             
-            return JsonResponse({
-                'success': True,
-                'image': f'data:image/png;base64,{img_str}',
-                'content': processed_content
-            })
+            return JsonResponse({'success': True, 'image': f'data:image/png;base64,{img_str}', 'content': processed_content})
             
         except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'error': f'Erro ao gerar QR Code: {str(e)}'
-            })
-    
+            return JsonResponse({'success': False, 'error': f'Erro ao gerar QR Code: {str(e)}'})
+
+    # ... (o resto da view e do arquivo continua o mesmo) ...
     def process_content(self, content, qr_type):
         """Processa o conteúdo baseado no tipo de QR Code"""
         if qr_type == 'url':
@@ -105,8 +91,9 @@ class GenerateQRCodeView(View):
             content = f'tel:{content}'
         elif qr_type == 'sms':
             content = f'sms:{content}'
-        
         return content
+
+# ... (outras views) ...
 
 
 class HistoryView(View):
@@ -166,3 +153,33 @@ class DownloadQRCodeView(View):
         except Exception as e:
             return HttpResponse(f'Erro ao gerar QR Code: {str(e)}', status=500)
 
+# ✅ ADICIONE ESTA NOVA VIEW
+class UploadPDFView(View):
+    """View para lidar com o upload de arquivos PDF via AJAX."""
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+    def post(self, request):
+        # Usa o formulário para validar os dados recebidos (request.POST e request.FILES)
+        form = PdfUploadForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            # Salva o formulário, o que cria um novo objeto PdfFile no banco
+            pdf_instance = form.save()
+            
+            # Constrói a URL completa para o arquivo salvo
+            pdf_url = request.build_absolute_uri(pdf_instance.pdf_file.url)
+            
+            return JsonResponse({
+                'success': True,
+                'url': pdf_url, # Envia a URL de volta para o frontend
+                'title': pdf_instance.title
+            })
+        else:
+            # Se o formulário for inválido, retorna os erros
+            return JsonResponse({
+                'success': False,
+                'error': 'Dados inválidos ou arquivo não enviado. Por favor, tente novamente.'
+            })
