@@ -10,8 +10,33 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from .models import QRCodeHistory
 from .forms import PdfUploadForm # ✅ IMPORTE O FORMULÁRIO
+
+from django.contrib.auth.views import LoginView
+from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin # Para proteger a HomeView
 import json
 
+# Sua view de login customizada (herdando da LoginView do Django)
+
+class MyLoginView(LoginView):
+    """View para autenticação de usuários."""
+    template_name = 'qrcode_generator/login.html'
+    redirect_authenticated_user = True
+    
+    def get_success_url(self):
+        """Define a URL de redirecionamento após o login bem-sucedido."""
+        # CORRETO: Use o nome da URL definido em urls.py
+        return reverse_lazy('home')
+
+# Protegendo sua HomeView original
+# Apenas usuários logados poderão acessá-la
+class HomeView(LoginRequiredMixin, View):
+    """View principal para geração de QR Codes"""
+    login_url = reverse_lazy('login') # Para onde redirecionar se não estiver logado
+
+    def get(self, request):
+        """Renderiza a página principal"""
+        return render(request, 'qrcode_generator/index.html')
 
 def get_client_ip(request):
     """Obtém o IP real do cliente"""
@@ -21,15 +46,6 @@ def get_client_ip(request):
     else:
         ip = request.META.get('REMOTE_ADDR')
     return ip
-
-
-class HomeView(View):
-    """View principal para geração de QR Codes"""
-    
-    def get(self, request):
-        """Renderiza a página principal"""
-        return render(request, 'qrcode_generator/index.html')
-
 
 # qrcode_generator/views.py
 # ... (imports e outras views) ...

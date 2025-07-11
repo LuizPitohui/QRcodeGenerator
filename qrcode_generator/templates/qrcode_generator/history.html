@@ -20,7 +20,7 @@
                     Visualize todos os QR Codes gerados na sua intranet
                 </p>
             </div>
-            <a href="{% url 'qrcode_generator:home' %}" class="btn btn-primary">
+            <a href="{% url 'home' %}" class="btn btn-primary">
                 <i class="fas fa-plus me-2"></i>Gerar Novo
             </a>
         </div>
@@ -301,20 +301,40 @@ function showContent(content) {
     modal.show();
 }
 
-function downloadQR(qrCodeUrl, content) {
-    // Cria um link temporário para download
-    const link = document.createElement('a');
-    link.href = qrCodeUrl;
-    link.download = 'qrcode_' + Date.now() + '.png';
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+async function downloadQR(qrCodeUrl, content) {
+    try {
+        // Busca a imagem da API
+        const response = await fetch(qrCodeUrl);
+        const blob = await response.blob();
+
+        // Cria uma URL de objeto para o blob da imagem
+        const objectUrl = URL.createObjectURL(blob);
+
+        // Cria um link temporário para o download
+        const link = document.createElement('a');
+        link.href = objectUrl;
+
+        // Gera um nome de arquivo mais descritivo e seguro
+        const safeContent = content.substring(0, 20).replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        link.download = `qrcode_${safeContent}_${Date.now()}.png`;
+
+        // Aciona o download
+        document.body.appendChild(link);
+        link.click();
+
+        // Limpa o link e a URL do objeto
+        document.body.removeChild(link);
+        URL.revokeObjectURL(objectUrl);
+
+    } catch (error) {
+        console.error('Erro ao baixar o QR Code:', error);
+        alert('Ocorreu um erro ao tentar baixar o QR Code. Por favor, tente novamente.');
+    }
 }
 
 function regenerateQR(content, type) {
     // Redireciona para a página principal com os dados preenchidos
-    const url = new URL('{% url "qrcode_generator:home" %}', window.location.origin);
+    const url = new URL('{% url "home" %}', window.location.origin);
     url.searchParams.set('content', content);
     url.searchParams.set('type', type);
     window.location.href = url.toString();

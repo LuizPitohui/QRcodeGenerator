@@ -14,7 +14,9 @@
   --cor-linha-table: #021B33;
   --logo-color: #134BF2;
 }
-
+.btn {
+  margin-left: 10px;
+}
 [data-theme="dark"] {
   --primary-color: #0F5FA6;
   --secondary-color: #0A8CBF;
