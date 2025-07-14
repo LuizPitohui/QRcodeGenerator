@@ -64,6 +64,7 @@ body, html {
     position: relative;
     width: 100%;
     margin-bottom: 25px;
+    
 }
 
 .input-icon i {
@@ -73,6 +74,7 @@ body, html {
     transform: translateY(-50%);
     color: var(--azul-nort);
     font-size: 1.1rem;
+    cursor: pointer;
 }
 
 .form-control {
@@ -127,11 +129,11 @@ body, html {
 
 /* Área da imagem à direita */
 .login-wrapper::after {
-    content: "";
-    flex: 1;
-    background: url("qrcode_generator\static\qrcode_generator\images\login-bg1.jpg") no-repeat center center;
-    background-size: cover;
-    animation: fadeInRight 0.8s ease;
+  content: "";
+  flex: 1;
+  background: url("../images/login-bg1.jpg") no-repeat center center; /* Caminho corrigido */
+  background-size: cover;
+  animation: fadeInRight 0.8s ease;
 }
 
 /* Responsivo */
