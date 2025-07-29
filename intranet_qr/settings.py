@@ -125,7 +125,7 @@ STATIC_ROOT = Path('/home/ubuntu/QRcodeGenerator/staticfiles')
 
 # Media files
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = Path('/home/ubuntu/QRcodeGenerator/media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
