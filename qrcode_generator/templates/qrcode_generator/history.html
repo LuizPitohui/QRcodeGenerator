@@ -139,6 +139,12 @@
                                     </td>
                                     <td class="text-center">
                                         <div class="btn-group" role="group">
+                                            <!-- BOTÃO DE EDITAR (NOVO) -->
+                                             
+                                            <a href="{% url 'edit_qrcode' item.id %}" class="btn btn-sm btn-outline-secondary" title="Editar Conteúdo">
+                                                <i class="fas fa-pencil-alt"></i>
+                                            </a>
+
                                             <button type="button" class="btn btn-sm btn-outline-primary" 
                                                     onclick="regenerateQR('{{ item.content|escapejs }}', '{{ item.qr_type }}')"
                                                     title="Regenerar QR Code">
@@ -165,7 +171,7 @@
                         <p class="text-muted mb-4">
                             Você ainda não gerou nenhum QR Code. Comece criando seu primeiro!
                         </p>
-                        <a href="{% url 'qrcode_generator:home' %}" class="btn btn-primary">
+                        <a href="{% url 'home' %}" class="btn btn-primary">
                             <i class="fas fa-plus me-2"></i>Gerar Primeiro QR Code
                         </a>
                     </div>

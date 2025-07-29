@@ -1,0 +1,98 @@
+{% extends 'qrcode_generator/base.html' %}
+{% load static %}
+
+{% block title %}Editar QR Code{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card slide-in">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-pencil-alt me-2"></i>Editar QR Code</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Coluna da Imagem -->
+                    <div class="col-md-4 text-center mb-4 mb-md-0">
+                        <h6 class="text-muted">QR Code Atual</h6>
+                        <p class="small">Esta imagem não mudará.</p>
+                        <img src="data:image/png;base64,{{ qr_instance.qr_code_image }}" alt="QR Code" class="img-fluid" style="border: 1px solid #ddd; padding: 5px; border-radius: 5px;">
+                    </div>
+
+                    <!-- Coluna do Formulário -->
+                    <div class="col-md-8">
+                        <h6 class="text-muted">Alterar Tipo e Destino</h6>
+                        
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            
+                            <!-- ✅ RENDERIZAÇÃO EXPLÍCITA DOS CAMPOS -->
+                            <!-- Campo Tipo de QR Code -->
+                            <div class="mb-3">
+                                <label for="{{ form.qr_type.id_for_label }}" class="form-label">{{ form.qr_type.label }}</label>
+                                {{ form.qr_type }}
+                            </div>
+
+                            <!-- Wrapper para o campo de conteúdo principal (Texto, URL, etc.) -->
+                            <div id="content-wrapper" class="mb-3">
+                                <label for="{{ form.content.id_for_label }}" class="form-label">{{ form.content.label }}</label>
+                                {{ form.content }}
+                                <div class="form-text">Para PDFs, o conteúdo será a URL gerada após o upload.</div>
+                            </div>
+
+                            <!-- Wrapper para o campo de upload de PDF -->
+                            <div id="pdf-upload-wrapper" class="mb-3" style="display: none;">
+                                <label for="{{ form.new_pdf_file.id_for_label }}" class="form-label">{{ form.new_pdf_file.label }}</label>
+                                {{ form.new_pdf_file }}
+                                <div class="form-text">Selecione um novo arquivo para substituir o PDF atual. Se nada for selecionado, o PDF antigo será mantido.</div>
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2 mt-4 border-top pt-3">
+                                <a href="{% url 'history' %}" class="btn btn-secondary">
+                                    <i class="fas fa-times me-2"></i>Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Salvar Alterações
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ✅ USANDO O ID EXPLÍCITO QUE DEFINIMOS NO FORMS.PY
+    const qrTypeSelect = document.getElementById('id_qr_type_edit'); 
+    const contentWrapper = document.getElementById('content-wrapper');
+    const pdfUploadWrapper = document.getElementById('pdf-upload-wrapper');
+    const contentField = document.getElementById('{{ form.content.id_for_label }}');
+
+    function toggleFields() {
+        if (!qrTypeSelect) return; // Segurança caso o elemento não seja encontrado
+
+        const selectedType = qrTypeSelect.value;
+
+        if (selectedType === 'pdf') {
+            pdfUploadWrapper.style.display = 'block';
+            contentWrapper.style.display = 'block';
+            contentField.readOnly = true;
+        } else {
+            pdfUploadWrapper.style.display = 'none';
+            contentWrapper.style.display = 'block';
+            contentField.readOnly = false;
+        }
+    }
+
+    if (qrTypeSelect) {
+        qrTypeSelect.addEventListener('change', toggleFields);
+        toggleFields(); // Chama no início para configurar o estado inicial
+    }
+});
+</script>
+{% endblock %}

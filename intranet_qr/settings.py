@@ -25,7 +25,8 @@ SECRET_KEY = 'django-insecure-^_2n*z4p!f1-tjg^l^3t5-fd#0#7_e)iqkodr48##9*z&8rw8q
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['qrcode.nortesistech.com', '54.15.216.155', '127.0.0.1', 'localhost']
+
 
 
 # Application definition
@@ -54,6 +55,7 @@ ROOT_URLCONF = 'intranet_qr.urls'
 
 TEMPLATES = [
     {
+
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [],
         'APP_DIRS': True,
@@ -75,8 +77,12 @@ WSGI_APPLICATION = 'intranet_qr.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'qrcode_generator',
+        'USER': 'postgres',
+        'PASSWORD': 'Ntech@_Ardl#n0Rt3',
+        'HOST': '172.31.0.19',
+        'PORT': '5432',
     }
 }
 
@@ -105,7 +111,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'pt-br'
 
-TIME_ZONE = 'America/Manaus'
 
 USE_I18N = True
 
@@ -116,7 +121,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = Path('/home/ubuntu/QRcodeGenerator/staticfiles')
 
 # Media files
 MEDIA_URL = '/media/'
@@ -126,3 +131,9 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# HTTPS: informa ao Django que o proxy (NGINX) está usando SSL
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Domínios confiáveis para CSRF
+CSRF_TRUSTED_ORIGINS = ['https://qrcode.nortesistech.com']
