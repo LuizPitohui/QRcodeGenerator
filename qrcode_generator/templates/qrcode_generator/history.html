@@ -14,10 +14,10 @@
         <div class="d-flex justify-content-between align-items-center mb-4 fade-in">
             <div>
                 <h1 class="display-6 fw-bold mb-2">
-                    <i class="fas fa-history me-3"></i>Histórico de QR Codes
+                    <i class="fas fa-history me-3"></i>Seu Histórico de QR Codes
                 </h1>
                 <p class="opacity-75 mb-0">
-                    Visualize todos os QR Codes gerados na sua intranet
+                    Olá, {{ user.get_full_name|default:user.username }}! Aqui estão todos os QR Codes que você gerou.
                 </p>
             </div>
             <a href="{% url 'home' %}" class="btn btn-primary">
@@ -61,100 +61,90 @@
             </div>
         </div>
 
-        <!-- History Table -->
+        <!-- Barra de Pesquisa e Filtros -->
+        <div class="card mb-4 fade-in">
+            <div class="card-body">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" id="searchInput" placeholder="Pesquisar por título ou conteúdo...">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-filter"></i></span>
+                            <select class="form-select" id="typeFilter">
+                                <option value="">Todos os tipos</option>
+                                {% for type_key, type_display in qr_code_types %}
+                                    <option value="{{ type_key }}">{{ type_display }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-outline-secondary w-100" id="resetFiltersBtn">
+                            <i class="fas fa-times me-2"></i>Limpar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela de Histórico -->
         <div class="card fade-in">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
                     <i class="fas fa-list me-2"></i>Registros de QR Codes
                 </h5>
+                <span id="resultsCount" class="badge bg-secondary"></span>
             </div>
             <div class="card-body p-0">
                 {% if page_obj %}
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0">
+                        <table class="table table-hover mb-0" id="historyTable">
                             <thead class="table-light">
                                 <tr>
-                                    <th scope="col">
-                                        <i class="fas fa-tag me-1"></i>Tipo
-                                    </th>
-                                    <th scope="col">
-                                        <i class="fas fa-file-alt me-1"></i>Conteúdo
-                                    </th>
-                                    <th scope="col">
-                                        <i class="fas fa-calendar me-1"></i>Data/Hora
-                                    </th>
-                                    <th scope="col">
-                                        <i class="fas fa-network-wired me-1"></i>IP
-                                    </th>
-                                    <th scope="col" class="text-center">
-                                        <i class="fas fa-cogs me-1"></i>Ações
-                                    </th>
+                                    <th scope="col" style="width: 20%;"><i class="fas fa-heading me-1"></i>Título</th>
+                                    <th scope="col" style="width: 15%;"><i class="fas fa-tag me-1"></i>Tipo</th>
+                                    <th scope="col" style="width: 30%;"><i class="fas fa-file-alt me-1"></i>Conteúdo</th>
+                                    <th scope="col" style="width: 15%;"><i class="fas fa-calendar me-1"></i>Data/Hora</th>
+                                    <th scope="col" class="text-center" style="width: 20%;"><i class="fas fa-cogs me-1"></i>Ações</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="historyTableBody">
                                 {% for item in page_obj %}
-                                <tr>
-                                    <td>
+                                <tr data-type="{{ item.qr_type }}">
+                                    <td class="align-middle">
+                                        <strong class="d-block" title="{{ item.title }}">{{ item.title|truncatechars:30 }}</strong>
+                                    </td>
+                                    <td class="align-middle">
                                         <span class="badge bg-primary">
-                                            {% if item.qr_type == 'text' %}
-                                                <i class="fas fa-font me-1"></i>Texto
-                                            {% elif item.qr_type == 'url' %}
-                                                <i class="fas fa-link me-1"></i>URL
-                                            {% elif item.qr_type == 'email' %}
-                                                <i class="fas fa-envelope me-1"></i>Email
-                                            {% elif item.qr_type == 'phone' %}
-                                                <i class="fas fa-phone me-1"></i>Telefone
-                                            {% elif item.qr_type == 'sms' %}
-                                                <i class="fas fa-sms me-1"></i>SMS
-                                            {% elif item.qr_type == 'wifi' %}
-                                                <i class="fas fa-wifi me-1"></i>WiFi
-                                            {% elif item.qr_type == 'vcard' %}
-                                                <i class="fas fa-address-card me-1"></i>vCard
-                                            {% else %}
-                                                <i class="fas fa-question me-1"></i>{{ item.get_qr_type_display }}
-                                            {% endif %}
+                                            <i class="fas fa-{{ item.qr_type|lower }} me-1"></i> {{ item.get_qr_type_display }}
                                         </span>
                                     </td>
-                                    <td>
+                                    <td class="align-middle">
                                         <div class="content-preview" title="{{ item.content }}">
-                                            {% if item.content|length > 50 %}
-                                                {{ item.content|slice:":50" }}...
-                                            {% else %}
-                                                {{ item.content }}
-                                            {% endif %}
+                                            {{ item.content|truncatechars:40 }}
                                         </div>
                                     </td>
-                                    <td>
+                                    <td class="align-middle">
                                         <div class="text-muted small">
-                                            <i class="fas fa-calendar-alt me-1"></i>
-                                            {{ item.created_at|date:"d/m/Y" }}
+                                            <i class="fas fa-calendar-alt me-1"></i>{{ item.created_at|date:"d/m/Y" }}
                                         </div>
                                         <div class="text-muted small">
-                                            <i class="fas fa-clock me-1"></i>
-                                            {{ item.created_at|time:"H:i:s" }}
+                                            <i class="fas fa-clock me-1"></i>{{ item.created_at|time:"H:i:s" }}
                                         </div>
                                     </td>
-                                    <td>
-                                        <code class="small">{{ item.ip_address|default:"N/A" }}</code>
-                                    </td>
-                                    <td class="text-center">
+                                    <td class="text-center align-middle">
                                         <div class="btn-group" role="group">
-                                            <!-- BOTÃO DE EDITAR (NOVO) -->
-                                             
-                                            <a href="{% url 'edit_qrcode' item.id %}" class="btn btn-sm btn-outline-secondary" title="Editar Conteúdo">
-                                                <i class="fas fa-pencil-alt"></i>
-                                            </a>
-
-                                            <button type="button" class="btn btn-sm btn-outline-primary" 
-                                                    onclick="regenerateQR('{{ item.content|escapejs }}', '{{ item.qr_type }}')"
-                                                    title="Regenerar QR Code">
-                                                <i class="fas fa-redo"></i>
-                                            </button>
+                                            <a href="{% url 'edit_qrcode' item.id %}" class="btn btn-sm btn-outline-secondary" title="Editar"><i class="fas fa-pencil-alt"></i></a>
                                             <button type="button" class="btn btn-sm btn-outline-info" 
-                                                    onclick="showContent('{{ item.content|escapejs }}')"
-                                                    title="Ver Conteúdo Completo">
+                                                    onclick="showContent('{{ item.content|escapejs }}', '{{ item.title|escapejs }}')"
+                                                    title="Ver QR Code">
                                                 <i class="fas fa-eye"></i>
                                             </button>
+                                            <a href="{% url 'delete_qrcode' item.id %}" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="fas fa-trash-alt"></i></a>
                                         </div>
                                     </td>
                                 </tr>
@@ -162,63 +152,42 @@
                             </tbody>
                         </table>
                     </div>
+                    <div id="noResultsMessage" class="text-center py-5" style="display: none;">
+                        <div class="feature-icon mx-auto mb-3" style="background-color: #6c757d;"><i class="fas fa-search"></i></div>
+                        <h5 class="text-muted">Nenhum resultado encontrado</h5>
+                        <p class="text-muted mb-0">Tente ajustar seus termos de busca ou filtros.</p>
+                    </div>
                 {% else %}
                     <div class="text-center py-5">
-                        <div class="feature-icon mx-auto mb-3" style="background-color: #6c757d;">
-                            <i class="fas fa-inbox"></i>
-                        </div>
+                        <div class="feature-icon mx-auto mb-3" style="background-color: #6c757d;"><i class="fas fa-inbox"></i></div>
                         <h5 class="text-muted">Nenhum QR Code encontrado</h5>
-                        <p class="text-muted mb-4">
-                            Você ainda não gerou nenhum QR Code. Comece criando seu primeiro!
-                        </p>
-                        <a href="{% url 'home' %}" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>Gerar Primeiro QR Code
-                        </a>
+                        <p class="text-muted mb-4">Você ainda não gerou nenhum QR Code. Comece criando seu primeiro!</p>
+                        <a href="{% url 'home' %}" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Gerar Primeiro QR Code</a>
                     </div>
                 {% endif %}
             </div>
         </div>
-
-        <!-- Pagination -->
+        
+        <!-- Paginação -->
         {% if page_obj.has_other_pages %}
         <nav aria-label="Navegação de páginas" class="mt-4 fade-in">
             <ul class="pagination justify-content-center">
                 {% if page_obj.has_previous %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page=1">
-                            <i class="fas fa-angle-double-left"></i>
-                        </a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
-                            <i class="fas fa-angle-left"></i>
-                        </a>
-                    </li>
+                    <li class="page-item"><a class="page-link" href="?page=1"><i class="fas fa-angle-double-left"></i></a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}"><i class="fas fa-angle-left"></i></a></li>
                 {% endif %}
 
                 {% for num in page_obj.paginator.page_range %}
                     {% if page_obj.number == num %}
-                        <li class="page-item active">
-                            <span class="page-link">{{ num }}</span>
-                        </li>
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
                     {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                        </li>
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
                     {% endif %}
                 {% endfor %}
 
                 {% if page_obj.has_next %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">
-                            <i class="fas fa-angle-right"></i>
-                        </a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">
-                            <i class="fas fa-angle-double-right"></i>
-                        </a>
-                    </li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}"><i class="fas fa-angle-right"></i></a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}"><i class="fas fa-angle-double-right"></i></a></li>
                 {% endif %}
             </ul>
         </nav>
@@ -227,14 +196,14 @@
 </div>
 
 <!-- Modal para exibir conteúdo completo -->
-<div class="modal fade" id="contentModal" tabindex="-1">
+<div class="modal fade" id="contentModal" tabindex="-1" aria-labelledby="contentModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-file-alt me-2"></i>Conteúdo Completo e QR Code
+                <h5 class="modal-title" id="modalTitle">
+                    <i class="fas fa-qrcode me-2"></i>QR Code
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="form-group mb-3">
@@ -248,15 +217,9 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>Fechar
-                </button>
-                <button type="button" class="btn btn-primary" onclick="copyToClipboard()">
-                    <i class="fas fa-copy me-2"></i>Copiar Conteúdo
-                </button>
-                <button type="button" class="btn btn-success" id="downloadQrCodeBtn">
-                    <i class="fas fa-download me-2"></i>Baixar QR Code
-                </button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i class="fas fa-times me-2"></i>Fechar</button>
+                <button type="button" class="btn btn-primary" onclick="copyToClipboard()"><i class="fas fa-copy me-2"></i>Copiar Conteúdo</button>
+                <button type="button" class="btn btn-success" id="downloadQrCodeBtn"><i class="fas fa-download me-2"></i>Baixar QR Code</button>
             </div>
         </div>
     </div>
@@ -265,26 +228,71 @@
 
 {% block extra_js %}
 <script>
-function showContent(content) {
+document.addEventListener('DOMContentLoaded', function() {
+    // --- LÓGICA DE FILTRAGEM ---
+    const searchInput = document.getElementById('searchInput');
+    const typeFilter = document.getElementById('typeFilter');
+    const tableBody = document.getElementById('historyTableBody');
+    const rows = tableBody ? tableBody.getElementsByTagName('tr') : [];
+    const noResultsMessage = document.getElementById('noResultsMessage');
+    const resultsCount = document.getElementById('resultsCount');
+    const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+
+    function filterTable() {
+        if (!tableBody) return;
+
+        const searchText = searchInput.value.toLowerCase();
+        const selectedType = typeFilter.value;
+        let visibleRows = 0;
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const titleCell = row.cells[0].textContent.toLowerCase();
+            const contentCell = row.cells[2].textContent.toLowerCase();
+            const rowType = row.dataset.type;
+
+            const matchesSearch = titleCell.includes(searchText) || contentCell.includes(searchText);
+            const matchesType = selectedType === "" || rowType === selectedType;
+
+            if (matchesSearch && matchesType) {
+                row.style.display = "";
+                visibleRows++;
+            } else {
+                row.style.display = "none";
+            }
+        }
+        resultsCount.textContent = `${visibleRows} de ${rows.length} resultados`;
+        noResultsMessage.style.display = visibleRows === 0 ? 'block' : 'none';
+    }
+
+    if(searchInput) {
+        searchInput.addEventListener('keyup', filterTable);
+        typeFilter.addEventListener('change', filterTable);
+        resetFiltersBtn.addEventListener('click', function() {
+            searchInput.value = "";
+            typeFilter.value = "";
+            filterTable();
+        });
+        filterTable();
+    }
+});
+
+// --- FUNÇÕES DO MODAL ---
+function showContent(content, title) {
+    document.getElementById('modalTitle').innerHTML = `<i class="fas fa-qrcode me-2"></i> ${title}`;
     document.getElementById('modalContent').value = content;
     
-    // Limpa o container anterior
     const container = document.getElementById("qrcodeContainer");
     const loading = document.getElementById("qrcodeLoading");
-    
-    // Mostra loading
     loading.style.display = 'block';
     loading.textContent = 'Gerando QR Code...';
     
-    // Remove qualquer QR code anterior
     const existingImg = container.querySelector('img');
     if (existingImg) {
         existingImg.remove();
     }
     
-    // Gera QR code usando API online
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(content)}`;
-    
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(content )}`;
     const img = new Image();
     img.onload = function() {
         loading.style.display = 'none';
@@ -298,52 +306,31 @@ function showContent(content) {
     img.style.height = '200px';
     img.alt = 'QR Code';
     
-    // Configura o botão de download
     document.getElementById('downloadQrCodeBtn').onclick = function() {
         downloadQR(qrCodeUrl, content);
     };
 
-    const modal = new bootstrap.Modal(document.getElementById('contentModal'));
-    modal.show();
+    const contentModal = new bootstrap.Modal(document.getElementById('contentModal'));
+    contentModal.show();
 }
 
 async function downloadQR(qrCodeUrl, content) {
     try {
-        // Busca a imagem da API
         const response = await fetch(qrCodeUrl);
         const blob = await response.blob();
-
-        // Cria uma URL de objeto para o blob da imagem
         const objectUrl = URL.createObjectURL(blob);
-
-        // Cria um link temporário para o download
         const link = document.createElement('a');
         link.href = objectUrl;
-
-        // Gera um nome de arquivo mais descritivo e seguro
         const safeContent = content.substring(0, 20).replace(/[^a-z0-9]/gi, '_').toLowerCase();
         link.download = `qrcode_${safeContent}_${Date.now()}.png`;
-
-        // Aciona o download
         document.body.appendChild(link);
         link.click();
-
-        // Limpa o link e a URL do objeto
         document.body.removeChild(link);
         URL.revokeObjectURL(objectUrl);
-
     } catch (error) {
         console.error('Erro ao baixar o QR Code:', error);
-        alert('Ocorreu um erro ao tentar baixar o QR Code. Por favor, tente novamente.');
+        alert('Ocorreu um erro ao tentar baixar o QR Code.');
     }
-}
-
-function regenerateQR(content, type) {
-    // Redireciona para a página principal com os dados preenchidos
-    const url = new URL('{% url "home" %}', window.location.origin);
-    url.searchParams.set('content', content);
-    url.searchParams.set('type', type);
-    window.location.href = url.toString();
 }
 
 function copyToClipboard() {
@@ -351,35 +338,10 @@ function copyToClipboard() {
     content.select();
     document.execCommand('copy');
     
-    // Mostra feedback visual
     const btn = event.target.closest('button');
     const originalText = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-check me-2"></i>Copiado!';
-    btn.classList.remove('btn-primary');
-    btn.classList.add('btn-success');
-    
-    setTimeout(() => {
-        btn.innerHTML = originalText;
-        btn.classList.remove('btn-success');
-        btn.classList.add('btn-primary');
-    }, 2000);
+    setTimeout(() => { btn.innerHTML = originalText; }, 2000);
 }
-
-// Preenche formulário se houver parâmetros na URL
-document.addEventListener('DOMContentLoaded', function() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const content = urlParams.get('content');
-    const type = urlParams.get('type');
-    
-    if (content && type) {
-        // Remove parâmetros da URL
-        window.history.replaceState({}, document.title, window.location.pathname);
-    }
-});
 </script>
 {% endblock %}
-
-
-
-
-

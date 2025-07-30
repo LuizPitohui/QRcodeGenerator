@@ -9,7 +9,8 @@ from .views import (
     DownloadQRCodeView, 
     UploadPDFView, 
     EditQRCodeView, 
-    QRRedirectView
+    QRRedirectView,
+    DeleteQRCodeView
 )
 from django.contrib.auth.views import LogoutView
 
@@ -24,4 +25,6 @@ urlpatterns = [
     path('upload-pdf/', UploadPDFView.as_view(), name='upload_pdf'),
     path('edit/<int:pk>/', EditQRCodeView.as_view(), name='edit_qrcode'),
     path('redirect/<int:pk>/', QRRedirectView.as_view(), name='qr_redirect'),
+    path('delete/<int:pk>/', DeleteQRCodeView.as_view(), name='delete_qrcode'),
+
 ]

@@ -1,0 +1,44 @@
+{% extends 'qrcode_generator/base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - Gerador de QR Code{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm border-danger fade-in">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Exclusão
+                </h4>
+            </div>
+            <div class="card-body">
+                <p class="lead">
+                    Você tem certeza de que deseja excluir permanentemente este QR Code?
+                </p>
+                
+                <div class="alert alert-secondary">
+                    <p class="mb-1"><strong>Tipo:</strong> {{ qrcode.get_qr_type_display }}</p>
+                    <p class="mb-0 text-break"><strong>Conteúdo:</strong> {{ qrcode.content|truncatechars:100 }}</p>
+                </div>
+
+                <p class="text-muted small mt-3">
+                    Esta ação não pode ser desfeita. O QR Code gerado a partir deste registro deixará de funcionar.
+                </p>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-end mt-4">
+                        <a href="{% url 'history' %}" class="btn btn-secondary me-2">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash-alt me-2"></i>Sim, Excluir
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

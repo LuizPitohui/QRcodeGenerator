@@ -22,10 +22,17 @@
                 <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Gerar Novo QR Code</h5>
             </div>
             <div class="card-body">
+                <!-- ✅ CORREÇÃO FINAL: Usando os nomes EXATOS do seu urls.py -->
                 <form id="qrForm" 
                       data-generate-url="{% url 'generate' %}"
                       data-download-url="{% url 'download' %}"
                       data-upload-pdf-url="{% url 'upload_pdf' %}">
+                    
+                    <div class="mb-3">
+                        <label for="qrTitle" class="form-label"><i class="fas fa-heading me-1"></i>Título</label>
+                        <input type="text" class="form-control" id="qrTitle" name="title" placeholder="Ex: Link da Reunião Semanal" required>
+                        <div class="form-text">Dê um nome para identificar facilmente seu QR Code no histórico.</div>
+                    </div>
                     
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -88,6 +95,7 @@
                     <h5 class="mb-3">
                         <i class="fas fa-check-circle text-success me-2"></i>QR Code Gerado com Sucesso!
                     </h5>
+                    <p class="lead" id="qrTitleDisplay"></p>
                     <div class="mb-3">
                         <img id="qrImage" src="" alt="QR Code" class="qr-image">
                     </div>

@@ -1,63 +1,74 @@
 {% extends 'qrcode_generator/base.html' %}
 {% load static %}
 
-{% block title %}Editar QR Code{% endblock %}
+{% block title %}Editar QR Code - {{ qr_instance.title }}{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="card slide-in">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-pencil-alt me-2"></i>Editar QR Code</h5>
+    <div class="col-md-10 col-lg-8">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4 fade-in">
+            <div>
+                <h1 class="display-6 fw-bold mb-2">
+                    <i class="fas fa-pencil-alt me-3"></i>Editar QR Code
+                </h1>
+                <p class="opacity-75 mb-0">
+                    Modifique o título, tipo e conteúdo do seu QR Code.
+                </p>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <!-- Coluna da Imagem -->
-                    <div class="col-md-4 text-center mb-4 mb-md-0">
-                        <h6 class="text-muted">QR Code Atual</h6>
-                        <p class="small">Esta imagem não mudará.</p>
-                        <img src="data:image/png;base64,{{ qr_instance.qr_code_image }}" alt="QR Code" class="img-fluid" style="border: 1px solid #ddd; padding: 5px; border-radius: 5px;">
+            <a href="{% url 'history' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Voltar ao Histórico
+            </a>
+        </div>
+
+        <div class="card shadow-sm fade-in">
+            <div class="card-body p-4">
+                <form method="post" enctype="multipart/form-data" id="editForm">
+                    {% csrf_token %}
+                    
+                    <!-- Campo Título -->
+                    <div class="mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label fw-bold">{{ form.title.label }}</label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                            <div class="invalid-feedback d-block">{{ form.title.errors.as_text }}</div>
+                        {% endif %}
                     </div>
 
-                    <!-- Coluna do Formulário -->
-                    <div class="col-md-8">
-                        <h6 class="text-muted">Alterar Tipo e Destino</h6>
-                        
-                        <form method="post" enctype="multipart/form-data">
-                            {% csrf_token %}
-                            
-                            <!-- ✅ RENDERIZAÇÃO EXPLÍCITA DOS CAMPOS -->
-                            <!-- Campo Tipo de QR Code -->
-                            <div class="mb-3">
-                                <label for="{{ form.qr_type.id_for_label }}" class="form-label">{{ form.qr_type.label }}</label>
-                                {{ form.qr_type }}
-                            </div>
-
-                            <!-- Wrapper para o campo de conteúdo principal (Texto, URL, etc.) -->
-                            <div id="content-wrapper" class="mb-3">
-                                <label for="{{ form.content.id_for_label }}" class="form-label">{{ form.content.label }}</label>
-                                {{ form.content }}
-                                <div class="form-text">Para PDFs, o conteúdo será a URL gerada após o upload.</div>
-                            </div>
-
-                            <!-- Wrapper para o campo de upload de PDF -->
-                            <div id="pdf-upload-wrapper" class="mb-3" style="display: none;">
-                                <label for="{{ form.new_pdf_file.id_for_label }}" class="form-label">{{ form.new_pdf_file.label }}</label>
-                                {{ form.new_pdf_file }}
-                                <div class="form-text">Selecione um novo arquivo para substituir o PDF atual. Se nada for selecionado, o PDF antigo será mantido.</div>
-                            </div>
-
-                            <div class="d-flex justify-content-end gap-2 mt-4 border-top pt-3">
-                                <a href="{% url 'history' %}" class="btn btn-secondary">
-                                    <i class="fas fa-times me-2"></i>Cancelar
-                                </a>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save me-2"></i>Salvar Alterações
-                                </button>
-                            </div>
-                        </form>
+                    <!-- Campo Tipo de QR Code -->
+                    <div class="mb-3">
+                        <label for="{{ form.qr_type.id_for_label }}" class="form-label fw-bold">{{ form.qr_type.label }}</label>
+                        {{ form.qr_type }}
+                        {% if form.qr_type.errors %}
+                            <div class="invalid-feedback d-block">{{ form.qr_type.errors.as_text }}</div>
+                        {% endif %}
                     </div>
-                </div>
+
+                    <!-- Campo Conteúdo -->
+                    <div class="mb-3" id="content-field">
+                        <label for="{{ form.content.id_for_label }}" class="form-label fw-bold">{{ form.content.label }}</label>
+                        {{ form.content }}
+                        {% if form.content.errors %}
+                            <div class="invalid-feedback d-block">{{ form.content.errors.as_text }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Campo de Upload de PDF (aparece condicionalmente) -->
+                    <div class="mb-3" id="pdf-upload-field" style="display: none;">
+                        <label for="{{ form.new_pdf_file.id_for_label }}" class="form-label fw-bold">{{ form.new_pdf_file.label }}</label>
+                        {{ form.new_pdf_file }}
+                        <div class="form-text">{{ form.new_pdf_file.help_text }}</div>
+                        {% if form.new_pdf_file.errors %}
+                            <div class="invalid-feedback d-block">{{ form.new_pdf_file.errors.as_text }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Salvar Alterações
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -67,32 +78,28 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // ✅ USANDO O ID EXPLÍCITO QUE DEFINIMOS NO FORMS.PY
-    const qrTypeSelect = document.getElementById('id_qr_type_edit'); 
-    const contentWrapper = document.getElementById('content-wrapper');
-    const pdfUploadWrapper = document.getElementById('pdf-upload-wrapper');
-    const contentField = document.getElementById('{{ form.content.id_for_label }}');
+    const typeSelect = document.getElementById('id_qr_type_edit');
+    const contentField = document.getElementById('content-field');
+    const contentTextarea = document.querySelector('#content-field textarea');
+    const pdfUploadField = document.getElementById('pdf-upload-field');
 
     function toggleFields() {
-        if (!qrTypeSelect) return; // Segurança caso o elemento não seja encontrado
-
-        const selectedType = qrTypeSelect.value;
-
-        if (selectedType === 'pdf') {
-            pdfUploadWrapper.style.display = 'block';
-            contentWrapper.style.display = 'block';
-            contentField.readOnly = true;
+        if (typeSelect.value === 'pdf') {
+            contentField.style.display = 'none'; // Oculta o campo de conteúdo de texto
+            contentTextarea.required = false;
+            pdfUploadField.style.display = 'block'; // Mostra o campo de upload de PDF
         } else {
-            pdfUploadWrapper.style.display = 'none';
-            contentWrapper.style.display = 'block';
-            contentField.readOnly = false;
+            contentField.style.display = 'block'; // Mostra o campo de conteúdo
+            contentTextarea.required = true;
+            pdfUploadField.style.display = 'none'; // Oculta o upload de PDF
         }
     }
 
-    if (qrTypeSelect) {
-        qrTypeSelect.addEventListener('change', toggleFields);
-        toggleFields(); // Chama no início para configurar o estado inicial
-    }
+    // Executa a função quando a página carrega
+    toggleFields();
+
+    // Adiciona um listener para mudanças no select
+    typeSelect.addEventListener('change', toggleFields);
 });
 </script>
 {% endblock %}

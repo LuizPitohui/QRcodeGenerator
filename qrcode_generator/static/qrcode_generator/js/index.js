@@ -2,13 +2,11 @@
 
 document.addEventListener("DOMContentLoaded", function () {
 
-    // ✅ 1. PRIMEIRO MARCADOR
     console.log("Script iniciado: DOMContentLoaded foi disparado.");
 
     // --- ELEMENTOS DO FORMULÁRIO PRINCIPAL ---
     const mainForm = document.getElementById("qrForm");
 
-    // ✅ 2. SEGUNDO MARCADOR (E um erro mais claro)
     console.log("Procurando o formulário principal. Encontrado:", mainForm);
     if (!mainForm) {
         console.error("ERRO CRÍTICO: Formulário com id='qrForm' não foi encontrado. O script será interrompido.");
@@ -24,6 +22,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const qrImage = document.getElementById("qrImage");
     const qrContentDisplay = document.getElementById("qrContentDisplay");
     const downloadBtn = document.getElementById("downloadBtn");
+    // ✅ Adicionado seletor para o campo de título e para o display do título no resultado
+    const qrTitleInput = document.getElementById("qrTitle");
+    const qrTitleDisplay = document.getElementById("qrTitleDisplay");
+
 
     // --- ELEMENTOS DO MODAL DE UPLOAD ---
     const pdfUploadModalElement = document.getElementById('pdfUploadModal');
@@ -69,6 +71,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     pdfUploadModal.hide();
                     qrContentInput.value = data.url;
                     qrTypeSelect.value = 'url';
+                    // Preenche o título principal com o título do PDF
+                    if (data.title) {
+                        qrTitleInput.value = data.title;
+                    }
                     showAlert("Upload do PDF realizado com sucesso! Agora gere o QR Code.", "success");
                 } else {
                     alert('Erro no upload: ' + data.error);
@@ -85,7 +91,6 @@ document.addEventListener("DOMContentLoaded", function () {
             });
     });
 
-    // ✅ 3. TERCEIRO MARCADOR
     console.log("Anexando a lógica ao botão 'Gerar QR Code'...");
 
     // --- LÓGICA PARA GERAR O QR CODE (FORMULÁRIO PRINCIPAL) ---
@@ -93,12 +98,14 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log("Botão 'Gerar QR Code' clicado, prevenindo envio padrão.");
         e.preventDefault();
 
-        const formData = new FormData(mainForm);
+        // ✅ CORREÇÃO APLICADA AQUI
+        // Em vez de usar FormData, pegamos os valores diretamente para montar o JSON.
         const data = {
-            content: formData.get("content"),
-            type: formData.get("type"),
-            size: formData.get("size"),
-            border: formData.get("border")
+            title: qrTitleInput.value, // Pega o valor do campo de título
+            content: qrContentInput.value,
+            type: qrTypeSelect.value,
+            size: document.getElementById("qrSize").value,
+            border: document.getElementById("qrBorder").value
         };
 
         generateBtn.disabled = true;
@@ -112,13 +119,14 @@ document.addEventListener("DOMContentLoaded", function () {
                 "Content-Type": "application/json",
                 'X-CSRFToken': getCookie('csrftoken')
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify(data) // Envia o objeto 'data' completo
         })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     qrImage.src = data.image;
                     qrContentDisplay.textContent = data.content;
+                    qrTitleDisplay.textContent = data.title; // Mostra o título no resultado
                     qrResult.classList.add("show");
                     showAlert("QR Code gerado com sucesso!", "success");
                 } else {
@@ -135,7 +143,7 @@ document.addEventListener("DOMContentLoaded", function () {
             });
     });
 
-    // ✅ 4. LÓGICA PARA DOWNLOAD DO QR CODE
+    // --- LÓGICA PARA DOWNLOAD DO QR CODE ---
     downloadBtn.addEventListener('click', function () {
         const data = {
             content: document.getElementById("qrContentDisplay").textContent,
